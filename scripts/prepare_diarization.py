@@ -60,7 +60,7 @@ def process_metadata(metadata, target_dir, source_rttm, libri2mix):
             mix_path = os.path.join(libri2mix, str(relpath))
             source1_id, source2_id = mix_id.split("_")
             spk1, spk2 = source1_id.split("-")[0], source2_id.split("-")[0]
-            reco1, reco2 = source1_id[len(spk1) + 1:], source2_id[len(spk2) + 1:]
+            reco1, reco2 = source1_id[len(spk1) + 1 :], source2_id[len(spk2) + 1 :]
             wavscp.write("{} {}\n".format(mix_id, mix_path))
             spk1_segs, spk2_segs = source_rttm[reco1], source_rttm[reco2]
 
@@ -69,7 +69,11 @@ def process_metadata(metadata, target_dir, source_rttm, libri2mix):
                 seg_id = "{}_{}_{}".format(mix_id, float2str(start), float2str(end))
                 segments.write("{} {} {} {}\n".format(seg_id, mix_id, start, end))
                 utt2spk.write("{} {}\n".format(seg_id, spk_id))
-                rttm.write("SPEAKER\t{}\t1\t{}\t{}\t<NA>\t<NA>\t{}\t<NA>\n".format(mix_id, start, end-start, spk_id))
+                rttm.write(
+                    "SPEAKER\t{}\t1\t{}\t{}\t<NA>\t<NA>\t{}\t<NA>\n".format(
+                        mix_id, start, end - start, spk_id
+                    )
+                )
                 spk2utt_cache[spk_id] = spk2utt_cache.get(spk_id, []) + [mix_id]
 
             for spk_id, start, end in spk2_segs:
@@ -77,13 +81,17 @@ def process_metadata(metadata, target_dir, source_rttm, libri2mix):
                 seg_id = "{}_{}_{}".format(mix_id, float2str(start), float2str(end))
                 segments.write("{} {} {} {}\n".format(seg_id, mix_id, start, end))
                 utt2spk.write("{} {}\n".format(seg_id, spk_id))
-                rttm.write("SPEAKER\t{}\t1\t{}\t{}\t<NA>\t<NA>\t{}\t<NA>\n".format(mix_id, start, end-start, spk_id))
+                rttm.write(
+                    "SPEAKER\t{}\t1\t{}\t{}\t<NA>\t<NA>\t{}\t<NA>\n".format(
+                        mix_id, start, end - start, spk_id
+                    )
+                )
                 spk2utt_cache[spk_id] = spk2utt_cache.get(spk_id, []) + [mix_id]
 
             reco2dur.write("{} {}\n".format(mix_id, float(length) / 16000))
 
     for spk_id in spk2utt_cache.keys():
-    	spk2utt.write("{} {}\n".format(spk_id, " ".join(spk2utt_cache[spk_id])))
+        spk2utt.write("{} {}\n".format(spk_id, " ".join(spk2utt_cache[spk_id])))
 
     wavscp.close()
     utt2spk.close()
@@ -92,24 +100,41 @@ def process_metadata(metadata, target_dir, source_rttm, libri2mix):
     rttm.close()
     reco2dur.close()
 
-    
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--target_dir', type=str, required=True, help='Path to generate kaldi_style result')
-parser.add_argument('--source_dir', type=str, default="Libri2Mix/wav16k/max/metadata")
-parser.add_argument('--rttm_dir', type=str, default="metadata/LibriSpeech")
+parser.add_argument(
+    "--target_dir", type=str, required=True, help="Path to generate kaldi_style result"
+)
+parser.add_argument("--source_dir", type=str, default="Libri2Mix/wav16k/max/metadata")
+parser.add_argument("--rttm_dir", type=str, default="metadata/LibriSpeech")
 
 args = parser.parse_args()
 
-train_rttm, train_spk = load_rttm_text(os.path.join(args.rttm_dir, "train_clean_100.rttm"))
+train_rttm, train_spk = load_rttm_text(
+    os.path.join(args.rttm_dir, "train_clean_100.rttm")
+)
 dev_rttm, dev_spk = load_rttm_text(os.path.join(args.rttm_dir, "dev_clean.rttm"))
 test_rttm, test_spk = load_rttm_text(os.path.join(args.rttm_dir, "test_clean.rttm"))
 
 libri2mix = re.search(f"(.+Libri2Mix)", args.source_dir).groups()[0]
 libri2mix = os.path.abspath(libri2mix)
-process_metadata(os.path.join(args.source_dir, "mixture_train-100_mix_both.csv"), os.path.join(args.target_dir, "train"), train_rttm, libri2mix)
-process_metadata(os.path.join(args.source_dir, "mixture_dev_mix_both.csv"), os.path.join(args.target_dir, "dev"), dev_rttm, libri2mix)
-process_metadata(os.path.join(args.source_dir, "mixture_test_mix_both.csv"), os.path.join(args.target_dir, "test"), test_rttm, libri2mix)
+process_metadata(
+    os.path.join(args.source_dir, "mixture_train_mix_both.csv"),
+    os.path.join(args.target_dir, "train"),
+    train_rttm,
+    libri2mix,
+)
+process_metadata(
+    os.path.join(args.source_dir, "mixture_dev_mix_both.csv"),
+    os.path.join(args.target_dir, "dev"),
+    dev_rttm,
+    libri2mix,
+)
+process_metadata(
+    os.path.join(args.source_dir, "mixture_test_mix_both.csv"),
+    os.path.join(args.target_dir, "test"),
+    test_rttm,
+    libri2mix,
+)
 
 print("Successfully finish Kaldi-style preparation")
-
